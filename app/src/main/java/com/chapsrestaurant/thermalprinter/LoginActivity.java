@@ -34,7 +34,7 @@ public class LoginActivity extends Activity {
     static final String KEY_IS_LOGGED_IN = "is_logged_in";
     static final String KEY_USER_NAME = "user_name";
 
-    private static final String LOGIN_URL = "http://192.168.1.11/chapsrestaurant/api/login.php";
+    private static final String LOGIN_URL = "http://192.168.1.16/chapsrestaurant/server/api/login.php";
     private static final int CONNECTION_TIMEOUT_MS = 15000;
 
     private final ExecutorService loginExecutor = Executors.newSingleThreadExecutor();
