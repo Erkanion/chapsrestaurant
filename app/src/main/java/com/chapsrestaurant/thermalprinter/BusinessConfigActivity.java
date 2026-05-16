@@ -1,6 +1,7 @@
 package com.chapsrestaurant.thermalprinter;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Typeface;
 import android.os.Build;
@@ -41,6 +42,10 @@ public class BusinessConfigActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        if (!isLoggedIn()) {
+            openLoginScreen();
+            return;
+        }
         configureSystemBars();
         preferences = getSharedPreferences(BUSINESS_PREFS, MODE_PRIVATE);
         businessCount = Math.max(1, preferences.getInt(userScopedKey(KEY_BUSINESS_COUNT), 1));
@@ -63,13 +68,105 @@ public class BusinessConfigActivity extends Activity {
         }
     }
 
+    private boolean isLoggedIn() {
+        return getSharedPreferences(LoginActivity.AUTH_PREFS, MODE_PRIVATE)
+                .getBoolean(LoginActivity.KEY_IS_LOGGED_IN, false);
+    }
+
+    private void logout() {
+        getSharedPreferences(LoginActivity.AUTH_PREFS, MODE_PRIVATE)
+                .edit()
+                .clear()
+                .apply();
+        openLoginScreen();
+    }
+
+    private void openLoginScreen() {
+        startActivity(new Intent(this, LoginActivity.class));
+        finish();
+    }
+
+    private void openMainMenu() {
+        startActivity(new Intent(this, MainActivity.class));
+        finish();
+    }
+
+    private void addTopBar(LinearLayout root) {
+        LinearLayout topBar = new LinearLayout(this);
+        topBar.setOrientation(LinearLayout.HORIZONTAL);
+        topBar.setGravity(Gravity.CENTER_VERTICAL);
+        topBar.setPadding(0, 8, 0, 8);
+        topBar.setBackgroundColor(COLOR_SURFACE);
+        root.addView(topBar, new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT));
+
+        Button menuButton = new Button(this);
+        menuButton.setText("☰");
+        menuButton.setTextSize(22);
+        menuButton.setTextColor(COLOR_ACCENT);
+        menuButton.setBackgroundColor(COLOR_SURFACE);
+        menuButton.setAllCaps(false);
+        menuButton.setOnClickListener(view -> openMainMenu());
+        topBar.addView(menuButton, new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT));
+
+        View spacer = new View(this);
+        topBar.addView(spacer, new LinearLayout.LayoutParams(
+                0,
+                1,
+                1));
+
+        TextView userText = new TextView(this);
+        userText.setText(getCurrentUserName());
+        userText.setTextColor(COLOR_MUTED);
+        userText.setTextSize(15);
+        userText.setTypeface(Typeface.DEFAULT_BOLD);
+        userText.setPadding(0, 0, 12, 0);
+        topBar.addView(userText, new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT));
+
+        Button logoutButton = new Button(this);
+        logoutButton.setText("⎋");
+        logoutButton.setTextSize(18);
+        logoutButton.setTextColor(COLOR_MUTED);
+        logoutButton.setBackgroundColor(COLOR_SURFACE);
+        logoutButton.setAllCaps(false);
+        logoutButton.setOnClickListener(view -> logout());
+        topBar.addView(logoutButton, new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT));
+    }
+
+    private String getCurrentUserName() {
+        String userName = getSharedPreferences(LoginActivity.AUTH_PREFS, MODE_PRIVATE)
+                .getString(LoginActivity.KEY_USER_NAME, "Administrador");
+        if (userName == null || userName.trim().isEmpty()) {
+            return "Administrador";
+        }
+        return userName;
+    }
+
     private void buildInterface() {
+        LinearLayout screenRoot = new LinearLayout(this);
+        screenRoot.setOrientation(LinearLayout.VERTICAL);
+        screenRoot.setPadding(20, 18 + getStatusBarHeight(), 20, 0);
+        screenRoot.setBackgroundColor(COLOR_BACKGROUND);
+
+        addTopBar(screenRoot);
+
         ScrollView scrollView = new ScrollView(this);
         scrollView.setBackgroundColor(COLOR_BACKGROUND);
+        screenRoot.addView(scrollView, new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                0,
+                1));
 
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(24, 18 + getStatusBarHeight(), 24, 24);
+        root.setPadding(4, 0, 4, 24);
         root.setBackgroundColor(COLOR_BACKGROUND);
         scrollView.addView(root);
 
@@ -141,7 +238,7 @@ public class BusinessConfigActivity extends Activity {
         backButton.setOnClickListener(view -> finish());
         root.addView(backButton, fullWidthParams());
 
-        setContentView(scrollView);
+        setContentView(screenRoot);
     }
 
     private void addField(LinearLayout root, String label, int inputType) {

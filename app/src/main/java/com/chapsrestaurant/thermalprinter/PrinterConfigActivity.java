@@ -52,6 +52,11 @@ public class PrinterConfigActivity extends Activity {
     private static final String PRINTER_PREFS = "printer_configuration";
     private static final String KEY_CONFIGURED_PRINTERS = "configured_printers";
     private static final String PRINTER_SEPARATOR = "\u001F";
+    private static final int COLOR_BACKGROUND = 0xFFFAFAFA;
+    private static final int COLOR_SURFACE = 0xFFFFFFFF;
+    private static final int COLOR_TEXT = 0xFF212121;
+    private static final int COLOR_MUTED = 0xFF6B7280;
+    private static final int COLOR_ACCENT = 0xFF2F6F5E;
 
     private final Map<String, BluetoothDevice> devices = new LinkedHashMap<>();
     private final ArrayList<String> deviceLabels = new ArrayList<>();
@@ -169,37 +174,102 @@ public class PrinterConfigActivity extends Activity {
         Window window = getWindow();
         window.clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            window.setStatusBarColor(0xFFFAFAFA);
+            window.setStatusBarColor(COLOR_BACKGROUND);
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             window.getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
         }
     }
 
+    private void addTopBar(LinearLayout root) {
+        LinearLayout topBar = new LinearLayout(this);
+        topBar.setOrientation(LinearLayout.HORIZONTAL);
+        topBar.setGravity(Gravity.CENTER_VERTICAL);
+        topBar.setPadding(0, 8, 0, 8);
+        topBar.setBackgroundColor(COLOR_SURFACE);
+        root.addView(topBar, new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT));
+
+        Button menuButton = new Button(this);
+        menuButton.setText("☰");
+        menuButton.setTextSize(22);
+        menuButton.setTextColor(COLOR_ACCENT);
+        menuButton.setBackgroundColor(COLOR_SURFACE);
+        menuButton.setAllCaps(false);
+        menuButton.setOnClickListener(view -> openMainMenu());
+        topBar.addView(menuButton, new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT));
+
+        View spacer = new View(this);
+        topBar.addView(spacer, new LinearLayout.LayoutParams(
+                0,
+                1,
+                1));
+
+        TextView userText = new TextView(this);
+        userText.setText(getCurrentUserName());
+        userText.setTextColor(COLOR_MUTED);
+        userText.setTextSize(15);
+        userText.setTypeface(Typeface.DEFAULT_BOLD);
+        userText.setPadding(0, 0, 12, 0);
+        topBar.addView(userText, new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT));
+
+        Button logoutButton = new Button(this);
+        logoutButton.setText("⎋");
+        logoutButton.setTextSize(18);
+        logoutButton.setTextColor(COLOR_MUTED);
+        logoutButton.setBackgroundColor(COLOR_SURFACE);
+        logoutButton.setAllCaps(false);
+        logoutButton.setOnClickListener(view -> logout());
+        topBar.addView(logoutButton, new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT));
+    }
+
+    private void openMainMenu() {
+        startActivity(new Intent(this, MainActivity.class));
+        finish();
+    }
+
+    private String getCurrentUserName() {
+        String userName = getSharedPreferences(LoginActivity.AUTH_PREFS, MODE_PRIVATE)
+                .getString(LoginActivity.KEY_USER_NAME, "Administrador");
+        if (userName == null || userName.trim().isEmpty()) {
+            return "Administrador";
+        }
+        return userName;
+    }
+
     private void buildInterface() {
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(32, 24 + getStatusBarHeight(), 32, 24);
-        root.setBackgroundColor(0xFFFAFAFA);
+        root.setPadding(20, 18 + getStatusBarHeight(), 20, 24);
+        root.setBackgroundColor(COLOR_BACKGROUND);
+
+        addTopBar(root);
 
         TextView title = new TextView(this);
         title.setText("Configuracion de Impresora");
         title.setTextSize(24);
         title.setTypeface(Typeface.DEFAULT_BOLD);
-        title.setTextColor(0xFF212121);
+        title.setTextColor(COLOR_TEXT);
         root.addView(title);
 
         TextView description = new TextView(this);
         description.setText("Impresoras configuradas para este negocio.");
         description.setTextSize(16);
-        description.setTextColor(0xFF6B7280);
+        description.setTextColor(COLOR_MUTED);
         description.setPadding(0, 10, 0, 12);
         root.addView(description);
 
         emptyConfiguredPrintersText = new TextView(this);
         emptyConfiguredPrintersText.setText("Aun no Hay Impresoras\nAgrega una primera impresora a su negocio");
         emptyConfiguredPrintersText.setTextSize(16);
-        emptyConfiguredPrintersText.setTextColor(0xFF6B7280);
+        emptyConfiguredPrintersText.setTextColor(COLOR_MUTED);
         emptyConfiguredPrintersText.setGravity(Gravity.CENTER_HORIZONTAL);
         emptyConfiguredPrintersText.setPadding(0, 18, 0, 18);
         root.addView(emptyConfiguredPrintersText, new LinearLayout.LayoutParams(
@@ -229,7 +299,7 @@ public class PrinterConfigActivity extends Activity {
         addPrinterButton.setTypeface(Typeface.DEFAULT_BOLD);
         addPrinterButton.setTextColor(0xFFFFFFFF);
         addPrinterButton.setGravity(Gravity.CENTER);
-        addPrinterButton.setBackgroundColor(0xFF2F6F5E);
+        addPrinterButton.setBackgroundColor(COLOR_ACCENT);
         addPrinterButton.setOnClickListener(view -> showAddPrinterDialog());
         LinearLayout.LayoutParams addParams = new LinearLayout.LayoutParams(72, 72);
         addParams.gravity = Gravity.CENTER_HORIZONTAL;
@@ -263,13 +333,6 @@ public class PrinterConfigActivity extends Activity {
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT));
 
-        Button logoutButton = new Button(this);
-        logoutButton.setText("Cerrar sesión");
-        logoutButton.setAllCaps(false);
-        logoutButton.setOnClickListener(view -> logout());
-        root.addView(logoutButton, new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT));
 
         progressBar = new ProgressBar(this);
         progressBar.setIndeterminate(true);
@@ -283,7 +346,7 @@ public class PrinterConfigActivity extends Activity {
 
         statusText = new TextView(this);
         statusText.setText("Presiona + para agregar una impresora al negocio.");
-        statusText.setTextColor(0xFF374151);
+        statusText.setTextColor(COLOR_TEXT);
         statusText.setTextSize(15);
         statusText.setPadding(0, 8, 0, 8);
         root.addView(statusText);
@@ -311,7 +374,7 @@ public class PrinterConfigActivity extends Activity {
         title.setText("Agregar una impresa");
         title.setTextSize(20);
         title.setTypeface(Typeface.DEFAULT_BOLD);
-        title.setTextColor(0xFF212121);
+        title.setTextColor(COLOR_TEXT);
         content.addView(title);
 
         String[] points = new String[]{
