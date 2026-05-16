@@ -50,6 +50,7 @@ public class MainActivity extends Activity {
     );
 
     private LinearLayout menuContainer;
+    private LinearLayout homeContainer;
     private TextView welcomeText;
     private boolean menuVisible;
 
@@ -146,14 +147,23 @@ public class MainActivity extends Activity {
                 LinearLayout.LayoutParams.WRAP_CONTENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT));
 
+        homeContainer = new LinearLayout(this);
+        homeContainer.setOrientation(LinearLayout.VERTICAL);
+        homeContainer.setGravity(Gravity.CENTER);
+        homeContainer.setBackgroundColor(COLOR_BACKGROUND);
+        root.addView(homeContainer, new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                0,
+                1));
+
         welcomeText = new TextView(this);
         welcomeText.setText("Bienvenido");
         welcomeText.setTextColor(COLOR_TEXT);
         welcomeText.setTextSize(24);
         welcomeText.setTypeface(Typeface.DEFAULT_BOLD);
-        welcomeText.setGravity(Gravity.CENTER_HORIZONTAL);
-        welcomeText.setPadding(0, 24, 0, 18);
-        root.addView(welcomeText, new LinearLayout.LayoutParams(
+        welcomeText.setGravity(Gravity.CENTER);
+        welcomeText.setPadding(0, 0, 0, dpToPx(18));
+        homeContainer.addView(welcomeText, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT));
 
@@ -165,9 +175,8 @@ public class MainActivity extends Activity {
         LinearLayout.LayoutParams logoParams = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 dpToPx(320));
-        logoParams.gravity = Gravity.CENTER_HORIZONTAL;
-        logoParams.setMargins(0, 0, 0, dpToPx(24));
-        root.addView(logoImage, logoParams);
+        logoParams.gravity = Gravity.CENTER;
+        homeContainer.addView(logoImage, logoParams);
 
         menuContainer = new LinearLayout(this);
         menuContainer.setOrientation(LinearLayout.VERTICAL);
@@ -242,12 +251,14 @@ public class MainActivity extends Activity {
     private void toggleMenu() {
         menuVisible = !menuVisible;
         menuContainer.setVisibility(menuVisible ? View.VISIBLE : View.GONE);
+        homeContainer.setVisibility(menuVisible ? View.GONE : View.VISIBLE);
     }
 
     private void handleMenuSelection(AdapterView<?> parent, View view, int position, long id) {
         String option = MENU_OPTIONS.get(position);
         menuVisible = false;
         menuContainer.setVisibility(View.GONE);
+        homeContainer.setVisibility(View.VISIBLE);
         if ("Configuracion de Negocio".equals(option)) {
             startActivity(new Intent(this, BusinessConfigActivity.class));
             return;
