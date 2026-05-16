@@ -23,6 +23,7 @@ import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
@@ -30,9 +31,19 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -52,6 +63,11 @@ public class PrinterConfigActivity extends Activity {
     private static final String PRINTER_PREFS = "printer_configuration";
     private static final String KEY_CONFIGURED_PRINTERS = "configured_printers";
     private static final String PRINTER_SEPARATOR = "\u001F";
+    private static final String PRINTER_API_URL = LoginActivity.API_BASE_URL + "printers.php";
+    private static final String METHOD_BLUETOOTH = "Bluetooth";
+    private static final String METHOD_ETHERNET = "Ethernet";
+    private static final String METHOD_WIFI = "Wifi";
+    private static final String DEFAULT_PAPER_SIZE = "80mm";
     private static final int COLOR_BACKGROUND = 0xFFFAFAFA;
     private static final int COLOR_SURFACE = 0xFFFFFFFF;
     private static final int COLOR_TEXT = 0xFF212121;
@@ -104,6 +120,7 @@ public class PrinterConfigActivity extends Activity {
         bluetoothAdapter = bluetoothManager == null ? null : bluetoothManager.getAdapter();
         buildInterface();
         registerDiscoveryReceiver();
+        fetchConfiguredPrintersFromDatabase();
 
         if (bluetoothAdapter == null) {
             scanButton.setEnabled(false);
@@ -319,7 +336,7 @@ public class PrinterConfigActivity extends Activity {
         wifiEthernetButton.setText("Buscar por Wifi Ethernet");
         wifiEthernetButton.setAllCaps(false);
         wifiEthernetButton.setVisibility(View.GONE);
-        wifiEthernetButton.setOnClickListener(view -> statusText.setText("Busqueda Wifi Ethernet pendiente de configurar."));
+        wifiEthernetButton.setOnClickListener(view -> showNetworkPrinterDialog());
         root.addView(wifiEthernetButton, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT));
@@ -431,15 +448,179 @@ public class PrinterConfigActivity extends Activity {
         updateConfiguredPrintersEmptyState();
     }
 
-    private void saveConfiguredPrinter(String printerLabel) {
-        if (!configuredPrinterLabels.contains(printerLabel)) {
+    private void saveConfiguredPrinter(String printerName, String macAddress, String paperSize, String setupMethod) {
+        String printerLabel = buildPrinterLabel(printerName, macAddress, paperSize, setupMethod);
+        int existingIndex = findConfiguredPrinterIndex(macAddress);
+        if (existingIndex >= 0) {
+            configuredPrinterLabels.set(existingIndex, printerLabel);
+        } else {
             configuredPrinterLabels.add(printerLabel);
-            getPrinterPreferences().edit()
-                    .putString(userScopedKey(KEY_CONFIGURED_PRINTERS), joinConfiguredPrinters())
-                    .apply();
-            configuredPrinterAdapter.notifyDataSetChanged();
-            updateConfiguredPrintersEmptyState();
         }
+        getPrinterPreferences().edit()
+                .putString(userScopedKey(KEY_CONFIGURED_PRINTERS), joinConfiguredPrinters())
+                .apply();
+        configuredPrinterAdapter.notifyDataSetChanged();
+        updateConfiguredPrintersEmptyState();
+        saveConfiguredPrinterToDatabase(printerName, macAddress, paperSize, setupMethod);
+    }
+
+    private String buildPrinterLabel(String printerName, String macAddress, String paperSize, String setupMethod) {
+        return printerName + "\n" + macAddress + "\nMetodo: " + setupMethod + " | Papel: " + paperSize;
+    }
+
+    private int findConfiguredPrinterIndex(String macAddress) {
+        for (int index = 0; index < configuredPrinterLabels.size(); index++) {
+            if (macAddress.equals(getPrinterMacAddress(configuredPrinterLabels.get(index)))) {
+                return index;
+            }
+        }
+        return -1;
+    }
+
+    private String getPrinterMacAddress(String printerLabel) {
+        String[] lines = printerLabel.split("\n", -1);
+        return lines.length > 1 ? lines[1].trim() : "";
+    }
+
+    private void fetchConfiguredPrintersFromDatabase() {
+        int userId = getCurrentUserId();
+        if (userId <= 0) {
+            return;
+        }
+        printerExecutor.execute(() -> {
+            try {
+                ArrayList<JSONObject> printers = requestConfiguredPrinters(userId);
+                runOnUiThread(() -> applyRemoteConfiguredPrinters(printers));
+            } catch (IOException | JSONException exception) {
+                runOnUiThread(() -> statusText.setText(
+                        "No se pudieron cargar impresoras de la base de datos: " + exception.getMessage()));
+            }
+        });
+    }
+
+    private ArrayList<JSONObject> requestConfiguredPrinters(int userId) throws IOException, JSONException {
+        HttpURLConnection connection = (HttpURLConnection) new URL(PRINTER_API_URL + "?user_id=" + userId).openConnection();
+        connection.setConnectTimeout(15000);
+        connection.setReadTimeout(15000);
+        connection.setRequestMethod("GET");
+        connection.setRequestProperty("Accept", "application/json");
+
+        int responseCode = connection.getResponseCode();
+        InputStream stream = responseCode >= 200 && responseCode < 300
+                ? connection.getInputStream()
+                : connection.getErrorStream();
+        JSONObject response = new JSONObject(readStream(stream));
+        connection.disconnect();
+
+        if (!response.optBoolean("success", false)) {
+            throw new IOException(response.optString("message", "Respuesta invalida"));
+        }
+
+        ArrayList<JSONObject> printers = new ArrayList<>();
+        JSONArray printerArray = response.optJSONArray("printers");
+        if (printerArray != null) {
+            for (int index = 0; index < printerArray.length(); index++) {
+                printers.add(printerArray.getJSONObject(index));
+            }
+        }
+        return printers;
+    }
+
+    private void applyRemoteConfiguredPrinters(ArrayList<JSONObject> printers) {
+        if (printers.isEmpty()) {
+            return;
+        }
+        configuredPrinterLabels.clear();
+        for (JSONObject printer : printers) {
+            configuredPrinterLabels.add(buildPrinterLabel(
+                    printer.optString("printer_name", "Impresora sin nombre"),
+                    printer.optString("mac_address", ""),
+                    printer.optString("paper_size", DEFAULT_PAPER_SIZE),
+                    printer.optString("setup_method", METHOD_BLUETOOTH)));
+        }
+        getPrinterPreferences().edit()
+                .putString(userScopedKey(KEY_CONFIGURED_PRINTERS), joinConfiguredPrinters())
+                .apply();
+        configuredPrinterAdapter.notifyDataSetChanged();
+        updateConfiguredPrintersEmptyState();
+        statusText.setText("Impresoras cargadas de la base de datos.");
+    }
+
+    private void saveConfiguredPrinterToDatabase(String printerName, String macAddress, String paperSize, String setupMethod) {
+        int userId = getCurrentUserId();
+        if (userId <= 0) {
+            statusText.setText("Impresora guardada localmente. Inicia sesion nuevamente para sincronizar con la base de datos.");
+            return;
+        }
+        JSONObject requestBody = new JSONObject();
+        try {
+            requestBody.put("user_id", userId);
+            requestBody.put("printer_name", printerName);
+            requestBody.put("mac_address", macAddress);
+            requestBody.put("paper_size", paperSize);
+            requestBody.put("setup_method", setupMethod);
+        } catch (JSONException exception) {
+            throw new IllegalStateException(exception);
+        }
+        printerExecutor.execute(() -> {
+            try {
+                JSONObject response = postConfiguredPrinter(requestBody);
+                runOnUiThread(() -> handlePrinterSaveResponse(response));
+            } catch (IOException | JSONException exception) {
+                runOnUiThread(() -> statusText.setText(
+                        "Impresora guardada localmente. No se pudo guardar en la base de datos: " + exception.getMessage()));
+            }
+        });
+    }
+
+    private JSONObject postConfiguredPrinter(JSONObject requestBody) throws IOException, JSONException {
+        HttpURLConnection connection = (HttpURLConnection) new URL(PRINTER_API_URL).openConnection();
+        connection.setConnectTimeout(15000);
+        connection.setReadTimeout(15000);
+        connection.setRequestMethod("POST");
+        connection.setRequestProperty("Content-Type", "application/json; charset=utf-8");
+        connection.setRequestProperty("Accept", "application/json");
+        connection.setDoOutput(true);
+
+        byte[] payload = requestBody.toString().getBytes(StandardCharsets.UTF_8);
+        try (OutputStream outputStream = connection.getOutputStream()) {
+            outputStream.write(payload);
+        }
+
+        int responseCode = connection.getResponseCode();
+        InputStream stream = responseCode >= 200 && responseCode < 300
+                ? connection.getInputStream()
+                : connection.getErrorStream();
+        JSONObject response = new JSONObject(readStream(stream));
+        connection.disconnect();
+        return response;
+    }
+
+    private void handlePrinterSaveResponse(JSONObject response) {
+        if (response.optBoolean("success", false)) {
+            statusText.setText("Impresora guardada en la base de datos.");
+            return;
+        }
+        statusText.setText(response.optString("message", "No se pudo guardar la impresora en la base de datos."));
+    }
+
+    private int getCurrentUserId() {
+        return getSharedPreferences(LoginActivity.AUTH_PREFS, MODE_PRIVATE)
+                .getInt(LoginActivity.KEY_USER_ID, 0);
+    }
+
+    private String readStream(InputStream stream) throws IOException {
+        if (stream == null) {
+            return "{}";
+        }
+        StringBuilder builder = new StringBuilder();
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                builder.append(line);
+            }
+        }
+        return builder.toString();
     }
 
     private String joinConfiguredPrinters() {
@@ -560,13 +741,86 @@ public class PrinterConfigActivity extends Activity {
         listAdapter.notifyDataSetChanged();
     }
 
+    private void showPaperSizeDialog(String printerName, String macAddress, String setupMethod) {
+        String[] paperSizes = new String[]{"58mm", "80mm"};
+        new AlertDialog.Builder(this)
+                .setTitle("Tamaño de papel")
+                .setItems(paperSizes, (dialogInterface, which) -> saveConfiguredPrinter(
+                        printerName,
+                        macAddress,
+                        paperSizes[which],
+                        setupMethod))
+                .show();
+    }
+
+    private void showNetworkPrinterDialog() {
+        LinearLayout content = new LinearLayout(this);
+        content.setOrientation(LinearLayout.VERTICAL);
+        content.setPadding(36, 18, 36, 0);
+
+        EditText printerNameInput = new EditText(this);
+        printerNameInput.setHint("Nombre de la impresora");
+        content.addView(printerNameInput);
+
+        EditText macAddressInput = new EditText(this);
+        macAddressInput.setHint("MAC address o direccion IP");
+        content.addView(macAddressInput);
+
+        EditText paperSizeInput = new EditText(this);
+        paperSizeInput.setHint("Tamaño de papel (58mm o 80mm)");
+        paperSizeInput.setText(DEFAULT_PAPER_SIZE);
+        content.addView(paperSizeInput);
+
+        String[] methods = new String[]{METHOD_WIFI, METHOD_ETHERNET};
+        final String[] selectedMethod = new String[]{METHOD_WIFI};
+
+        TextView methodText = new TextView(this);
+        methodText.setText("Metodo de alta: " + selectedMethod[0]);
+        methodText.setTextColor(COLOR_TEXT);
+        methodText.setTextSize(15);
+        methodText.setPadding(0, 12, 0, 0);
+        methodText.setOnClickListener(view -> new AlertDialog.Builder(this)
+                .setTitle("Metodo de alta")
+                .setItems(methods, (dialogInterface, which) -> {
+                    selectedMethod[0] = methods[which];
+                    methodText.setText("Metodo de alta: " + selectedMethod[0]);
+                })
+                .show());
+        content.addView(methodText);
+
+        AlertDialog dialog = new AlertDialog.Builder(this)
+                .setTitle("Agregar impresora Wifi/Ethernet")
+                .setView(content)
+                .setPositiveButton("Guardar", null)
+                .setNegativeButton("Cancelar", null)
+                .create();
+        dialog.setOnShowListener(dialogInterface -> dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(view -> {
+            String printerName = printerNameInput.getText().toString().trim();
+            String macAddress = macAddressInput.getText().toString().trim();
+            String paperSize = paperSizeInput.getText().toString().trim();
+            if (printerName.isEmpty()) {
+                printerNameInput.setError("Ingresa el nombre de la impresora");
+                return;
+            }
+            if (macAddress.isEmpty()) {
+                macAddressInput.setError("Ingresa la MAC address o direccion IP");
+                return;
+            }
+            String normalizedPaperSize = paperSize.isEmpty() ? DEFAULT_PAPER_SIZE : paperSize;
+            saveConfiguredPrinter(printerName, macAddress, normalizedPaperSize, selectedMethod[0]);
+            dialog.dismiss();
+        }));
+        dialog.show();
+    }
+
     private void selectPrinter(AdapterView<?> parent, View view, int position, long id) {
         String label = deviceLabels.get(position);
         String address = label.substring(label.lastIndexOf('\n') + 1);
         selectedDevice = devices.get(address);
         printButton.setEnabled(selectedDevice != null);
         if (selectedDevice != null) {
-            saveConfiguredPrinter(label);
+            String printerName = label.substring(0, label.lastIndexOf('\n')).trim();
+            showPaperSizeDialog(printerName, address, METHOD_BLUETOOTH);
         }
         statusText.setText("Impresora seleccionada: " + label.replace('\n', ' '));
     }
