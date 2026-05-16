@@ -88,6 +88,7 @@ public class MainActivity extends Activity {
         window.clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             window.setStatusBarColor(COLOR_BACKGROUND);
+            window.setNavigationBarColor(COLOR_BACKGROUND);
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             window.getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
@@ -97,7 +98,7 @@ public class MainActivity extends Activity {
     private void buildInterface() {
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(20, 18 + getStatusBarHeight(), 20, 20);
+        root.setPadding(dpToPx(20), dpToPx(18) + getStatusBarHeight(), dpToPx(20), dpToPx(20) + getNavigationBarHeight());
         root.setBackgroundColor(COLOR_BACKGROUND);
 
         LinearLayout topBar = new LinearLayout(this);
@@ -229,6 +230,14 @@ public class MainActivity extends Activity {
 
     private int dpToPx(int dp) {
         return Math.round(dp * getResources().getDisplayMetrics().density);
+    }
+
+    private int getNavigationBarHeight() {
+        int resourceId = getResources().getIdentifier("navigation_bar_height", "dimen", "android");
+        if (resourceId > 0) {
+            return getResources().getDimensionPixelSize(resourceId);
+        }
+        return 0;
     }
 
     private int getStatusBarHeight() {

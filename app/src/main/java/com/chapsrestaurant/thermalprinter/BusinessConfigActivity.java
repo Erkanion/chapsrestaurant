@@ -89,6 +89,7 @@ public class BusinessConfigActivity extends Activity {
         window.clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             window.setStatusBarColor(COLOR_BACKGROUND);
+            window.setNavigationBarColor(COLOR_BACKGROUND);
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             window.getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
@@ -179,7 +180,7 @@ public class BusinessConfigActivity extends Activity {
     private void buildInterface() {
         LinearLayout screenRoot = new LinearLayout(this);
         screenRoot.setOrientation(LinearLayout.VERTICAL);
-        screenRoot.setPadding(20, 18 + getStatusBarHeight(), 20, 0);
+        screenRoot.setPadding(20, 18 + getStatusBarHeight(), 20, getNavigationBarHeight());
         screenRoot.setBackgroundColor(COLOR_BACKGROUND);
 
         addTopBar(screenRoot);
@@ -295,6 +296,14 @@ public class BusinessConfigActivity extends Activity {
                 LinearLayout.LayoutParams.WRAP_CONTENT);
         params.setMargins(0, 6, 0, 6);
         return params;
+    }
+
+    private int getNavigationBarHeight() {
+        int resourceId = getResources().getIdentifier("navigation_bar_height", "dimen", "android");
+        if (resourceId > 0) {
+            return getResources().getDimensionPixelSize(resourceId);
+        }
+        return 0;
     }
 
     private int getStatusBarHeight() {

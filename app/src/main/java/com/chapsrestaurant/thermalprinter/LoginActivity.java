@@ -68,7 +68,7 @@ public class LoginActivity extends Activity {
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
         root.setGravity(Gravity.CENTER_VERTICAL);
-        root.setPadding(40, 40, 40, 40);
+        root.setPadding(40, 40, 40, 40 + getNavigationBarHeight());
         root.setBackgroundColor(0xFFF7F2EF);
 
         ImageView logoImage = new ImageView(this);
@@ -132,6 +132,14 @@ public class LoginActivity extends Activity {
         root.addView(statusText, fullWidthParams());
 
         setContentView(root);
+    }
+
+    private int getNavigationBarHeight() {
+        int resourceId = getResources().getIdentifier("navigation_bar_height", "dimen", "android");
+        if (resourceId > 0) {
+            return getResources().getDimensionPixelSize(resourceId);
+        }
+        return 0;
     }
 
     private LinearLayout.LayoutParams fullWidthParams() {

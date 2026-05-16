@@ -192,6 +192,7 @@ public class PrinterConfigActivity extends Activity {
         window.clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             window.setStatusBarColor(COLOR_BACKGROUND);
+            window.setNavigationBarColor(COLOR_BACKGROUND);
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             window.getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
@@ -264,7 +265,7 @@ public class PrinterConfigActivity extends Activity {
     private void buildInterface() {
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(20, 18 + getStatusBarHeight(), 20, 24);
+        root.setPadding(20, 18 + getStatusBarHeight(), 20, 24 + getNavigationBarHeight());
         root.setBackgroundColor(COLOR_BACKGROUND);
 
         addTopBar(root);
@@ -638,6 +639,14 @@ public class PrinterConfigActivity extends Activity {
         int emptyStateVisibility = configuredPrinterLabels.isEmpty() ? View.VISIBLE : View.GONE;
         emptyConfiguredPrintersText.setVisibility(emptyStateVisibility);
         emptyPrinterIcon.setVisibility(emptyStateVisibility);
+    }
+
+    private int getNavigationBarHeight() {
+        int resourceId = getResources().getIdentifier("navigation_bar_height", "dimen", "android");
+        if (resourceId > 0) {
+            return getResources().getDimensionPixelSize(resourceId);
+        }
+        return 0;
     }
 
     private int getStatusBarHeight() {
