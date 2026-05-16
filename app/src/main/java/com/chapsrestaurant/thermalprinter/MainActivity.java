@@ -161,9 +161,12 @@ public class MainActivity extends Activity {
         logoImage.setImageResource(R.drawable.chapsrestaurant);
         logoImage.setContentDescription("Chaps Restaurant");
         logoImage.setAdjustViewBounds(true);
-        LinearLayout.LayoutParams logoParams = new LinearLayout.LayoutParams(260, 260);
+        logoImage.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        LinearLayout.LayoutParams logoParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                dpToPx(320));
         logoParams.gravity = Gravity.CENTER_HORIZONTAL;
-        logoParams.setMargins(0, 0, 0, 24);
+        logoParams.setMargins(0, 0, 0, dpToPx(24));
         root.addView(logoImage, logoParams);
 
         menuContainer = new LinearLayout(this);
@@ -213,6 +216,10 @@ public class MainActivity extends Activity {
                 1));
 
         setContentView(root);
+    }
+
+    private int dpToPx(int dp) {
+        return Math.round(dp * getResources().getDisplayMetrics().density);
     }
 
     private int getStatusBarHeight() {
