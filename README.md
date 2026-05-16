@@ -29,7 +29,7 @@ La app no se conecta directamente a MySQL desde Android porque exponer usuario y
 
 1. Crea la base de datos ejecutando `server/database/schema.sql` en tu servidor MySQL.
 2. Copia la carpeta `server/api` a tu hosting o servidor PHP.
-3. Edita `server/api/config.php` con el host, usuario y contraseña reales de MySQL.
+3. La conexión incluida en `server/api/config.php` queda configurada para MySQL local: servidor `localhost`, usuario `root` y contraseña vacía. Cambia esos valores si tu servidor usa credenciales diferentes.
 4. Crea usuarios guardando la contraseña con `password_hash()` de PHP. Ejemplo:
 
 ```bash

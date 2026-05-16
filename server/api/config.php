@@ -1,8 +1,8 @@
 <?php
-const DB_HOST = '127.0.0.1';
+const DB_HOST = 'localhost';
 const DB_NAME = 'chapsrestaurant';
-const DB_USER = 'chaps_user';
-const DB_PASSWORD = 'cambia_esta_contrasena';
+const DB_USER = 'root';
+const DB_PASSWORD = '';
 const DB_CHARSET = 'utf8mb4';
 
 function db_connection(): PDO
