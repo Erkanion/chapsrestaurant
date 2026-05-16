@@ -66,11 +66,11 @@ Desde el menu principal entra a **Configuracion de Negocio** para administrar un
 - Slogan
 - Logo
 
-La pantalla incluye navegacion entre negocios, boton para agregar otro negocio y guardado local por usuario. La base de datos tambien incluye la tabla `businesses` para soportar la relacion de un usuario con multiples negocios.
+La pantalla incluye navegacion entre negocios, boton para agregar otro negocio y sincronizacion con la base de datos por usuario. Al abrir la seccion, Android consulta `server/api/businesses.php` para mostrar los negocios guardados en MySQL; tambien conserva una copia local como respaldo cuando no hay conexion.
 
-## Configurar MySQL y API de login
+## Configurar MySQL y APIs
 
-La app no se conecta directamente a MySQL desde Android porque exponer usuario y contraseña de la base de datos dentro de la APK no es seguro. En su lugar, Android llama a `server/api/login.php`, y ese archivo valida el usuario en MySQL.
+La app no se conecta directamente a MySQL desde Android porque exponer usuario y contraseña de la base de datos dentro de la APK no es seguro. En su lugar, Android llama a `server/api/login.php` para validar el usuario y a `server/api/businesses.php` para leer y guardar los datos del negocio en MySQL.
 
 1. Crea la base de datos ejecutando `server/database/schema.sql` en tu servidor MySQL.
 2. Copia la carpeta `server/api` a tu hosting o servidor PHP.
@@ -82,4 +82,4 @@ php -r "echo password_hash('123456', PASSWORD_DEFAULT) . PHP_EOL;"
 ```
 
 5. Inserta el hash generado en la columna `password_hash` de la tabla `users`.
-6. Verifica que `login.php` responda JSON en `http://192.168.1.16/chapsrestaurant/server/api/login.php` o ajusta `LOGIN_URL` si tu endpoint queda en otra ruta.
+6. Verifica que `login.php` responda JSON en `http://192.168.1.16/chapsrestaurant/server/api/login.php` y que `businesses.php` responda en `http://192.168.1.16/chapsrestaurant/server/api/businesses.php` o ajusta `API_BASE_URL` si tus endpoints quedan en otra ruta.

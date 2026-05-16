@@ -34,8 +34,10 @@ public class LoginActivity extends Activity {
     static final String AUTH_PREFS = "auth_preferences";
     static final String KEY_IS_LOGGED_IN = "is_logged_in";
     static final String KEY_USER_NAME = "user_name";
+    static final String KEY_USER_ID = "user_id";
+    static final String API_BASE_URL = "http://192.168.1.16/chapsrestaurant/server/api/";
 
-    private static final String LOGIN_URL = "http://192.168.1.16/chapsrestaurant/server/api/login.php";
+    private static final String LOGIN_URL = API_BASE_URL + "login.php";
     private static final int CONNECTION_TIMEOUT_MS = 15000;
 
     private final ExecutorService loginExecutor = Executors.newSingleThreadExecutor();
@@ -193,8 +195,9 @@ public class LoginActivity extends Activity {
         JSONObject jsonResponse = new JSONObject(responseText);
         boolean success = jsonResponse.optBoolean("success", false);
         String message = jsonResponse.optString("message", success ? "Acceso concedido" : "Acceso denegado");
+        int userId = jsonResponse.optInt("user_id", 0);
         String displayName = jsonResponse.optString("name", user);
-        return new LoginResponse(success, message, displayName);
+        return new LoginResponse(success, message, displayName, userId);
     }
 
     private String readStream(InputStream stream) throws IOException {
@@ -218,6 +221,7 @@ public class LoginActivity extends Activity {
                     .edit()
                     .putBoolean(KEY_IS_LOGGED_IN, true)
                     .putString(KEY_USER_NAME, response.displayName)
+                    .putInt(KEY_USER_ID, response.userId)
                     .apply();
             toast("Bienvenido " + response.displayName);
             openPrinterScreen();
@@ -253,11 +257,13 @@ public class LoginActivity extends Activity {
         final boolean success;
         final String message;
         final String displayName;
+        final int userId;
 
-        LoginResponse(boolean success, String message, String displayName) {
+        LoginResponse(boolean success, String message, String displayName, int userId) {
             this.success = success;
             this.message = message;
             this.displayName = displayName;
+            this.userId = userId;
         }
     }
 }
