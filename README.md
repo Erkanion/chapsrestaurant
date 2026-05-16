@@ -46,6 +46,12 @@ El menú se abre con el botón de hamburguesa **☰** ubicado hasta arriba. El t
 - Gestion de Usuarios
 - Gestios de Mesas
 
+## Configuracion de Impresora
+
+Al entrar al modulo se muestran primero las impresoras configuradas para el negocio. Si no hay ninguna, aparece el mensaje **Aun no Hay Impresoras** y la indicacion **Agrega una primera impresora a su negocio**.
+
+El icono **+** de la parte inferior abre un aviso tipo pop up con los puntos relevantes de la funcion de impresion y un boton **Continuar**. Despues de continuar, el usuario puede buscar una impresora por **Bluetooth** o por **Wifi Ethernet**. Al seleccionar una impresora Bluetooth, queda guardada como impresora configurada del usuario.
+
 ## Configuracion de Negocio
 
 Desde el menu principal entra a **Configuracion de Negocio** para administrar uno o varios negocios del usuario actual. Cada negocio permite capturar:

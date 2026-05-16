@@ -2,6 +2,7 @@ package com.chapsrestaurant.thermalprinter;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothManager;
@@ -10,6 +11,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Typeface;
 import android.os.Build;
@@ -44,18 +46,25 @@ public class PrinterConfigActivity extends Activity {
     private static final int REQUEST_BLUETOOTH_PERMISSIONS = 101;
     private static final UUID SPP_UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
     private static final Charset PRINTER_CHARSET = Charset.forName("windows-1252");
+    private static final String PRINTER_PREFS = "printer_configuration";
+    private static final String KEY_CONFIGURED_PRINTERS = "configured_printers";
+    private static final String PRINTER_SEPARATOR = "\u001F";
 
     private final Map<String, BluetoothDevice> devices = new LinkedHashMap<>();
     private final ArrayList<String> deviceLabels = new ArrayList<>();
+    private final ArrayList<String> configuredPrinterLabels = new ArrayList<>();
     private final ExecutorService printerExecutor = Executors.newSingleThreadExecutor();
 
     private ArrayAdapter<String> listAdapter;
+    private ArrayAdapter<String> configuredPrinterAdapter;
     private BluetoothAdapter bluetoothAdapter;
     private BluetoothDevice selectedDevice;
     private Button scanButton;
     private Button printButton;
     private ProgressBar progressBar;
     private TextView statusText;
+    private TextView emptyConfiguredPrintersText;
+    private Button wifiEthernetButton;
     private boolean discoveryReceiverRegistered;
 
     private final BroadcastReceiver discoveryReceiver = new BroadcastReceiver() {
@@ -93,8 +102,6 @@ public class PrinterConfigActivity extends Activity {
             return;
         }
 
-        requestBluetoothPermissionsIfNeeded();
-        loadPairedDevices();
     }
 
     @Override
@@ -157,27 +164,69 @@ public class PrinterConfigActivity extends Activity {
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
         root.setPadding(32, 36, 32, 24);
-        root.setBackgroundColor(0xFFF7F2EF);
+        root.setBackgroundColor(0xFFFAFAFA);
 
         TextView title = new TextView(this);
-        title.setText("Impresora térmica Bluetooth");
+        title.setText("Configuracion de Impresora");
         title.setTextSize(24);
         title.setTypeface(Typeface.DEFAULT_BOLD);
-        title.setTextColor(0xFF3E2723);
+        title.setTextColor(0xFF212121);
         root.addView(title);
 
         TextView description = new TextView(this);
-        description.setText("Busca impresoras térmicas Bluetooth, selecciona una y envía una impresión ESC/POS de prueba.");
+        description.setText("Impresoras configuradas para este negocio.");
         description.setTextSize(16);
-        description.setTextColor(0xFF5D4037);
-        description.setPadding(0, 10, 0, 20);
+        description.setTextColor(0xFF6B7280);
+        description.setPadding(0, 10, 0, 12);
         root.addView(description);
 
+        emptyConfiguredPrintersText = new TextView(this);
+        emptyConfiguredPrintersText.setText("Aun no Hay Impresoras\nAgrega una primera impresora a su negocio");
+        emptyConfiguredPrintersText.setTextSize(16);
+        emptyConfiguredPrintersText.setTextColor(0xFF6B7280);
+        emptyConfiguredPrintersText.setGravity(Gravity.CENTER_HORIZONTAL);
+        emptyConfiguredPrintersText.setPadding(0, 18, 0, 18);
+        root.addView(emptyConfiguredPrintersText, new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT));
+
+        configuredPrinterAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, configuredPrinterLabels);
+        ListView configuredPrinterList = new ListView(this);
+        configuredPrinterList.setAdapter(configuredPrinterAdapter);
+        configuredPrinterList.setDividerHeight(1);
+        root.addView(configuredPrinterList, new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                0,
+                1));
+
+        TextView addPrinterButton = new TextView(this);
+        addPrinterButton.setText("+");
+        addPrinterButton.setTextSize(34);
+        addPrinterButton.setTypeface(Typeface.DEFAULT_BOLD);
+        addPrinterButton.setTextColor(0xFFFFFFFF);
+        addPrinterButton.setGravity(Gravity.CENTER);
+        addPrinterButton.setBackgroundColor(0xFF2F6F5E);
+        addPrinterButton.setOnClickListener(view -> showAddPrinterDialog());
+        LinearLayout.LayoutParams addParams = new LinearLayout.LayoutParams(72, 72);
+        addParams.gravity = Gravity.CENTER_HORIZONTAL;
+        addParams.setMargins(0, 12, 0, 12);
+        root.addView(addPrinterButton, addParams);
+
         scanButton = new Button(this);
-        scanButton.setText("Buscar impresoras Bluetooth");
+        scanButton.setText("Buscar por Bluetooth");
         scanButton.setAllCaps(false);
+        scanButton.setVisibility(View.GONE);
         scanButton.setOnClickListener(view -> startDiscovery());
         root.addView(scanButton, new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT));
+
+        wifiEthernetButton = new Button(this);
+        wifiEthernetButton.setText("Buscar por Wifi Ethernet");
+        wifiEthernetButton.setAllCaps(false);
+        wifiEthernetButton.setVisibility(View.GONE);
+        wifiEthernetButton.setOnClickListener(view -> statusText.setText("Busqueda Wifi Ethernet pendiente de configurar."));
+        root.addView(wifiEthernetButton, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT));
 
@@ -209,8 +258,8 @@ public class PrinterConfigActivity extends Activity {
         root.addView(progressBar, progressParams);
 
         statusText = new TextView(this);
-        statusText.setText("Activa Bluetooth y presiona Buscar impresoras Bluetooth.");
-        statusText.setTextColor(0xFF4E342E);
+        statusText.setText("Presiona + para agregar una impresora al negocio.");
+        statusText.setTextColor(0xFF374151);
         statusText.setTextSize(15);
         statusText.setPadding(0, 8, 0, 8);
         root.addView(statusText);
@@ -226,6 +275,112 @@ public class PrinterConfigActivity extends Activity {
                 1));
 
         setContentView(root);
+        loadConfiguredPrinters();
+    }
+
+    private void showAddPrinterDialog() {
+        LinearLayout content = new LinearLayout(this);
+        content.setOrientation(LinearLayout.VERTICAL);
+        content.setPadding(36, 18, 36, 0);
+
+        TextView title = new TextView(this);
+        title.setText("Agregar una impresa");
+        title.setTextSize(20);
+        title.setTypeface(Typeface.DEFAULT_BOLD);
+        title.setTextColor(0xFF212121);
+        content.addView(title);
+
+        String[] points = new String[]{
+                "1. Selecciona el tipo de conexion de la impresora.",
+                "2. Busca la impresora por Bluetooth o por Wifi Ethernet.",
+                "3. Guarda la impresora y envia una prueba de impresion."
+        };
+        int[] colors = new int[]{0xFF2F6F5E, 0xFF6B7280, 0xFF212121};
+        for (int index = 0; index < points.length; index++) {
+            TextView pointView = new TextView(this);
+            pointView.setText(points[index]);
+            pointView.setTextSize(15);
+            pointView.setTextColor(colors[index]);
+            pointView.setPadding(0, 12, 0, 0);
+            content.addView(pointView);
+        }
+
+        TextView helpText = new TextView(this);
+        helpText.setText("Color puntos relevantes de la funcion para impresion");
+        helpText.setTextSize(14);
+        helpText.setTextColor(0xFF2F6F5E);
+        helpText.setPadding(0, 14, 0, 0);
+        content.addView(helpText);
+
+        AlertDialog dialog = new AlertDialog.Builder(this)
+                .setView(content)
+                .setPositiveButton("Continuar", null)
+                .create();
+        dialog.setOnShowListener(dialogInterface -> dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(view -> {
+            dialog.dismiss();
+            showPrinterSearchOptions();
+        }));
+        dialog.show();
+    }
+
+    private void showPrinterSearchOptions() {
+        scanButton.setVisibility(View.VISIBLE);
+        wifiEthernetButton.setVisibility(View.VISIBLE);
+        statusText.setText("Elige si deseas buscar la impresora por Bluetooth o por Wifi Ethernet.");
+    }
+
+    private void loadConfiguredPrinters() {
+        configuredPrinterLabels.clear();
+        String savedPrinters = getPrinterPreferences().getString(userScopedKey(KEY_CONFIGURED_PRINTERS), "");
+        if (!savedPrinters.isEmpty()) {
+            String[] printers = savedPrinters.split(PRINTER_SEPARATOR, -1);
+            for (String printer : printers) {
+                if (!printer.trim().isEmpty()) {
+                    configuredPrinterLabels.add(printer);
+                }
+            }
+        }
+        configuredPrinterAdapter.notifyDataSetChanged();
+        updateConfiguredPrintersEmptyState();
+    }
+
+    private void saveConfiguredPrinter(String printerLabel) {
+        if (!configuredPrinterLabels.contains(printerLabel)) {
+            configuredPrinterLabels.add(printerLabel);
+            getPrinterPreferences().edit()
+                    .putString(userScopedKey(KEY_CONFIGURED_PRINTERS), joinConfiguredPrinters())
+                    .apply();
+            configuredPrinterAdapter.notifyDataSetChanged();
+            updateConfiguredPrintersEmptyState();
+        }
+    }
+
+    private String joinConfiguredPrinters() {
+        StringBuilder builder = new StringBuilder();
+        for (String printer : configuredPrinterLabels) {
+            if (builder.length() > 0) {
+                builder.append(PRINTER_SEPARATOR);
+            }
+            builder.append(printer);
+        }
+        return builder.toString();
+    }
+
+    private void updateConfiguredPrintersEmptyState() {
+        emptyConfiguredPrintersText.setVisibility(configuredPrinterLabels.isEmpty() ? View.VISIBLE : View.GONE);
+    }
+
+    private SharedPreferences getPrinterPreferences() {
+        return getSharedPreferences(PRINTER_PREFS, MODE_PRIVATE);
+    }
+
+    private String userScopedKey(String key) {
+        String userName = getSharedPreferences(LoginActivity.AUTH_PREFS, MODE_PRIVATE)
+                .getString(LoginActivity.KEY_USER_NAME, "Administrador");
+        if (userName == null || userName.trim().isEmpty()) {
+            userName = "Administrador";
+        }
+        return userName + "_" + key;
     }
 
     private void registerDiscoveryReceiver() {
@@ -313,6 +468,9 @@ public class PrinterConfigActivity extends Activity {
         String address = label.substring(label.lastIndexOf('\n') + 1);
         selectedDevice = devices.get(address);
         printButton.setEnabled(selectedDevice != null);
+        if (selectedDevice != null) {
+            saveConfiguredPrinter(label);
+        }
         statusText.setText("Impresora seleccionada: " + label.replace('\n', ' '));
     }
 
