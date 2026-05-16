@@ -5,10 +5,11 @@ import android.content.Intent;
 import android.graphics.Typeface;
 import android.os.Build;
 import android.os.Bundle;
-import android.view.Window;
-import android.view.WindowManager;
 import android.view.Gravity;
 import android.view.View;
+import android.view.ViewGroup;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -22,6 +23,13 @@ import java.util.Arrays;
 import java.util.List;
 
 public class MainActivity extends Activity {
+    private static final int COLOR_BLACK = 0xFF101010;
+    private static final int COLOR_ORANGE = 0xFFFF7A00;
+    private static final int COLOR_RED = 0xFFD62828;
+    private static final int COLOR_WOOD = 0xFF8B5A2B;
+    private static final int COLOR_DARK_GREEN = 0xFF0B3D2E;
+    private static final int COLOR_CREAM = 0xFFFFF3E0;
+
     private static final List<String> MENU_OPTIONS = Arrays.asList(
             "Dashboard",
             "Configuracion de Negocio",
@@ -41,8 +49,8 @@ public class MainActivity extends Activity {
             "Gestios de Mesas"
     );
 
-    private TextView statusText;
-    private ListView menuList;
+    private LinearLayout menuContainer;
+    private TextView welcomeText;
     private boolean menuVisible;
 
     @Override
@@ -78,23 +86,24 @@ public class MainActivity extends Activity {
         Window window = getWindow();
         window.clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            window.setStatusBarColor(0xFFF7F2EF);
+            window.setStatusBarColor(COLOR_BLACK);
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            window.getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
+            window.getDecorView().setSystemUiVisibility(0);
         }
     }
 
     private void buildInterface() {
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(24, 28 + getStatusBarHeight(), 24, 24);
-        root.setBackgroundColor(0xFFF7F2EF);
+        root.setPadding(20, 18 + getStatusBarHeight(), 20, 20);
+        root.setBackgroundColor(COLOR_DARK_GREEN);
 
         LinearLayout topBar = new LinearLayout(this);
         topBar.setOrientation(LinearLayout.HORIZONTAL);
         topBar.setGravity(Gravity.CENTER_VERTICAL);
-        topBar.setPadding(0, 0, 0, 12);
+        topBar.setPadding(14, 10, 14, 10);
+        topBar.setBackgroundColor(COLOR_BLACK);
         root.addView(topBar, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT));
@@ -102,69 +111,94 @@ public class MainActivity extends Activity {
         Button hamburgerButton = new Button(this);
         hamburgerButton.setText("☰");
         hamburgerButton.setTextSize(24);
+        hamburgerButton.setTextColor(COLOR_CREAM);
+        hamburgerButton.setBackgroundColor(COLOR_ORANGE);
         hamburgerButton.setAllCaps(false);
         hamburgerButton.setOnClickListener(view -> toggleMenu());
         topBar.addView(hamburgerButton, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.WRAP_CONTENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT));
 
-        TextView title = new TextView(this);
-        title.setText("POS Restaurante");
-        title.setTextSize(22);
-        title.setTypeface(Typeface.DEFAULT_BOLD);
-        title.setTextColor(0xFF3E2723);
-        title.setPadding(16, 0, 0, 0);
-        topBar.addView(title, new LinearLayout.LayoutParams(
+        View spacer = new View(this);
+        topBar.addView(spacer, new LinearLayout.LayoutParams(
                 0,
-                LinearLayout.LayoutParams.WRAP_CONTENT,
+                1,
                 1));
+
+        TextView userText = new TextView(this);
+        userText.setText(getCurrentUserName());
+        userText.setTextColor(COLOR_CREAM);
+        userText.setTextSize(15);
+        userText.setTypeface(Typeface.DEFAULT_BOLD);
+        userText.setPadding(0, 0, 12, 0);
+        topBar.addView(userText, new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT));
 
         Button logoutButton = new Button(this);
         logoutButton.setText("⎋");
         logoutButton.setTextSize(20);
+        logoutButton.setTextColor(COLOR_CREAM);
+        logoutButton.setBackgroundColor(COLOR_RED);
         logoutButton.setAllCaps(false);
         logoutButton.setOnClickListener(view -> logout());
         topBar.addView(logoutButton, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.WRAP_CONTENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT));
 
-        TextView userText = new TextView(this);
-        userText.setText(getCurrentUserName());
-        userText.setTextColor(0xFF3E2723);
-        userText.setTextSize(15);
-        userText.setTypeface(Typeface.DEFAULT_BOLD);
-        userText.setPadding(10, 0, 0, 0);
-        topBar.addView(userText, new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.WRAP_CONTENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT));
-
-        TextView subtitle = new TextView(this);
-        subtitle.setText("Toca ☰ para abrir o cerrar el menú principal");
-        subtitle.setTextSize(16);
-        subtitle.setTextColor(0xFF5D4037);
-        subtitle.setPadding(0, 0, 0, 16);
-        root.addView(subtitle);
-
-        statusText = new TextView(this);
-        statusText.setText("Menu principal listo.");
-        statusText.setTextColor(0xFF4E342E);
-        statusText.setTextSize(15);
-        statusText.setGravity(Gravity.CENTER_HORIZONTAL);
-        statusText.setPadding(0, 12, 0, 12);
-        root.addView(statusText, new LinearLayout.LayoutParams(
+        welcomeText = new TextView(this);
+        welcomeText.setText("Bienvenido");
+        welcomeText.setTextColor(COLOR_CREAM);
+        welcomeText.setTextSize(26);
+        welcomeText.setTypeface(Typeface.DEFAULT_BOLD);
+        welcomeText.setGravity(Gravity.CENTER_HORIZONTAL);
+        welcomeText.setPadding(0, 24, 0, 18);
+        root.addView(welcomeText, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT));
 
-        ArrayAdapter<String> menuAdapter = new ArrayAdapter<>(
+        menuContainer = new LinearLayout(this);
+        menuContainer.setOrientation(LinearLayout.VERTICAL);
+        menuContainer.setVisibility(View.GONE);
+        menuContainer.setBackgroundColor(COLOR_WOOD);
+        menuContainer.setPadding(12, 12, 12, 12);
+        root.addView(menuContainer, new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                0,
+                1));
+
+        TextView menuTitle = new TextView(this);
+        menuTitle.setText("POS Restaurante");
+        menuTitle.setTextColor(COLOR_CREAM);
+        menuTitle.setTextSize(24);
+        menuTitle.setTypeface(Typeface.DEFAULT_BOLD);
+        menuTitle.setGravity(Gravity.CENTER_HORIZONTAL);
+        menuTitle.setPadding(0, 8, 0, 14);
+        menuContainer.addView(menuTitle, new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT));
+
+        ArrayAdapter<String> menuAdapter = new ArrayAdapter<String>(
                 this,
                 android.R.layout.simple_list_item_1,
-                new ArrayList<>(MENU_OPTIONS));
-        menuList = new ListView(this);
+                new ArrayList<>(MENU_OPTIONS)) {
+            @Override
+            public View getView(int position, View convertView, ViewGroup parent) {
+                TextView itemView = (TextView) super.getView(position, convertView, parent);
+                itemView.setTextColor(COLOR_CREAM);
+                itemView.setTextSize(18);
+                itemView.setTypeface(Typeface.DEFAULT_BOLD);
+                itemView.setBackgroundColor(position % 2 == 0 ? COLOR_BLACK : COLOR_DARK_GREEN);
+                itemView.setPadding(20, 18, 20, 18);
+                return itemView;
+            }
+        };
+        ListView menuList = new ListView(this);
         menuList.setAdapter(menuAdapter);
-        menuList.setDividerHeight(1);
+        menuList.setDividerHeight(4);
+        menuList.setBackgroundColor(COLOR_WOOD);
         menuList.setOnItemClickListener(this::handleMenuSelection);
-        menuList.setVisibility(View.GONE);
-        root.addView(menuList, new LinearLayout.LayoutParams(
+        menuContainer.addView(menuList, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 0,
                 1));
@@ -182,30 +216,27 @@ public class MainActivity extends Activity {
 
     private String getCurrentUserName() {
         String userName = getSharedPreferences(LoginActivity.AUTH_PREFS, MODE_PRIVATE)
-                .getString(LoginActivity.KEY_USER_NAME, "Usuario");
+                .getString(LoginActivity.KEY_USER_NAME, "Administrador");
         if (userName == null || userName.trim().isEmpty()) {
-            return "Usuario";
+            return "Administrador";
         }
         return userName;
     }
 
     private void toggleMenu() {
         menuVisible = !menuVisible;
-        menuList.setVisibility(menuVisible ? View.VISIBLE : View.GONE);
-        statusText.setText(menuVisible ? "Menu principal abierto." : "Menu principal cerrado.");
+        menuContainer.setVisibility(menuVisible ? View.VISIBLE : View.GONE);
     }
 
     private void handleMenuSelection(AdapterView<?> parent, View view, int position, long id) {
         String option = MENU_OPTIONS.get(position);
+        menuVisible = false;
+        menuContainer.setVisibility(View.GONE);
         if ("Configuracion de Impresora".equals(option)) {
-            menuVisible = false;
-            menuList.setVisibility(View.GONE);
             startActivity(new Intent(this, PrinterConfigActivity.class));
             return;
         }
-        menuVisible = false;
-        menuList.setVisibility(View.GONE);
-        statusText.setText(option + " seleccionado. Módulo pendiente de implementar.");
+        welcomeText.setText(option);
         Toast.makeText(this, option, Toast.LENGTH_SHORT).show();
     }
 }
