@@ -10,6 +10,7 @@ import android.view.Gravity;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -67,6 +68,15 @@ public class LoginActivity extends Activity {
         root.setGravity(Gravity.CENTER_VERTICAL);
         root.setPadding(40, 40, 40, 40);
         root.setBackgroundColor(0xFFF7F2EF);
+
+        ImageView logoImage = new ImageView(this);
+        logoImage.setImageResource(R.drawable.chapsrestaurant);
+        logoImage.setContentDescription("Chaps Restaurant");
+        logoImage.setAdjustViewBounds(true);
+        LinearLayout.LayoutParams logoParams = new LinearLayout.LayoutParams(180, 180);
+        logoParams.gravity = Gravity.CENTER_HORIZONTAL;
+        logoParams.setMargins(0, 0, 0, 12);
+        root.addView(logoImage, logoParams);
 
         TextView title = new TextView(this);
         title.setText("Chaps Restaurant");

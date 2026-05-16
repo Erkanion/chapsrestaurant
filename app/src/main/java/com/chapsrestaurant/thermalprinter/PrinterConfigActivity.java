@@ -18,9 +18,12 @@ import android.os.Build;
 import android.os.Bundle;
 import android.view.Gravity;
 import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.ProgressBar;
@@ -65,6 +68,7 @@ public class PrinterConfigActivity extends Activity {
     private TextView statusText;
     private TextView emptyConfiguredPrintersText;
     private Button wifiEthernetButton;
+    private ImageView emptyPrinterIcon;
     private boolean discoveryReceiverRegistered;
 
     private final BroadcastReceiver discoveryReceiver = new BroadcastReceiver() {
@@ -90,6 +94,7 @@ public class PrinterConfigActivity extends Activity {
             return;
         }
 
+        configureSystemBars();
         BluetoothManager bluetoothManager = getSystemService(BluetoothManager.class);
         bluetoothAdapter = bluetoothManager == null ? null : bluetoothManager.getAdapter();
         buildInterface();
@@ -160,10 +165,21 @@ public class PrinterConfigActivity extends Activity {
         finish();
     }
 
+    private void configureSystemBars() {
+        Window window = getWindow();
+        window.clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            window.setStatusBarColor(0xFFFAFAFA);
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            window.getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
+        }
+    }
+
     private void buildInterface() {
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(32, 36, 32, 24);
+        root.setPadding(32, 24 + getStatusBarHeight(), 32, 24);
         root.setBackgroundColor(0xFFFAFAFA);
 
         TextView title = new TextView(this);
@@ -190,14 +206,22 @@ public class PrinterConfigActivity extends Activity {
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT));
 
+        emptyPrinterIcon = new ImageView(this);
+        emptyPrinterIcon.setImageResource(R.drawable.ic_printer);
+        emptyPrinterIcon.setContentDescription("Icono de impresora");
+        emptyPrinterIcon.setAdjustViewBounds(true);
+        LinearLayout.LayoutParams emptyIconParams = new LinearLayout.LayoutParams(96, 96);
+        emptyIconParams.gravity = Gravity.CENTER_HORIZONTAL;
+        emptyIconParams.setMargins(0, 0, 0, 10);
+        root.addView(emptyPrinterIcon, emptyIconParams);
+
         configuredPrinterAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, configuredPrinterLabels);
         ListView configuredPrinterList = new ListView(this);
         configuredPrinterList.setAdapter(configuredPrinterAdapter);
         configuredPrinterList.setDividerHeight(1);
         root.addView(configuredPrinterList, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
-                0,
-                1));
+                LinearLayout.LayoutParams.WRAP_CONTENT));
 
         TextView addPrinterButton = new TextView(this);
         addPrinterButton.setText("+");
@@ -367,7 +391,17 @@ public class PrinterConfigActivity extends Activity {
     }
 
     private void updateConfiguredPrintersEmptyState() {
-        emptyConfiguredPrintersText.setVisibility(configuredPrinterLabels.isEmpty() ? View.VISIBLE : View.GONE);
+        int emptyStateVisibility = configuredPrinterLabels.isEmpty() ? View.VISIBLE : View.GONE;
+        emptyConfiguredPrintersText.setVisibility(emptyStateVisibility);
+        emptyPrinterIcon.setVisibility(emptyStateVisibility);
+    }
+
+    private int getStatusBarHeight() {
+        int resourceId = getResources().getIdentifier("status_bar_height", "dimen", "android");
+        if (resourceId > 0) {
+            return getResources().getDimensionPixelSize(resourceId);
+        }
+        return 0;
     }
 
     private SharedPreferences getPrinterPreferences() {
