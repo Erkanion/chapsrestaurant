@@ -26,13 +26,12 @@ if ($user === '' || $password === '') {
 }
 
 try {
-    $pdo = db_connection();
-    $statement = $pdo->prepare(
-        'SELECT id, name, password_hash FROM users '
-        . 'WHERE is_active = 1 AND (email = :user OR username = :user) LIMIT 1'
-    );
-    $statement->execute(['user' => $user]);
-    $account = $statement->fetch();
+    $connection = db_connection();
+    $safeUser = $connection->real_escape_string($user);
+    $query = "SELECT id, name, password_hash FROM users "
+        . "WHERE is_active = 1 AND (email = '$safeUser' OR username = '$safeUser') LIMIT 1";
+    $result = $connection->query($query);
+    $account = $result->fetch_assoc();
 
     if (!$account || !password_verify($password, $account['password_hash'])) {
         http_response_code(401);
@@ -40,6 +39,7 @@ try {
             'success' => false,
             'message' => 'Credenciales incorrectas',
         ]);
+        $connection->close();
         exit;
     }
 
@@ -49,6 +49,7 @@ try {
         'user_id' => (int) $account['id'],
         'name' => $account['name'],
     ]);
+    $connection->close();
 } catch (Throwable $exception) {
     http_response_code(500);
     echo json_encode([

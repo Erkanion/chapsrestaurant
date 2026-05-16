@@ -5,7 +5,7 @@ Aplicación Android nativa para iniciar sesión contra una base de datos MySQL, 
 ## Funciones
 
 - Pantalla de login en español antes de abrir la impresora.
-- Autenticación contra MySQL mediante una API PHP segura con consultas preparadas.
+- Autenticación contra MySQL mediante una API PHP con mysqli, sin PDO ni prepared statements.
 - Guarda la sesión localmente y permite cerrar sesión desde la pantalla de impresión.
 - Solicita permisos Bluetooth modernos (`BLUETOOTH_SCAN` y `BLUETOOTH_CONNECT`) en Android 12+.
 - Muestra impresoras/dispositivos Bluetooth emparejados.
