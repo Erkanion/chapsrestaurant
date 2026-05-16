@@ -29,6 +29,8 @@ public class MainActivity extends Activity {
     private static final int COLOR_TEXT = 0xFF212121;
     private static final int COLOR_MUTED = 0xFF6B7280;
     private static final int COLOR_ACCENT = 0xFF2F6F5E;
+    private static final int COLOR_DEVICE_HEADER = 0xFFFF7A00;
+    private static final int COLOR_DEVICE_FOOTER = 0xFF000000;
 
     private static final List<String> MENU_OPTIONS = Arrays.asList(
             "Dashboard",
@@ -87,8 +89,8 @@ public class MainActivity extends Activity {
         Window window = getWindow();
         window.clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            window.setStatusBarColor(COLOR_BACKGROUND);
-            window.setNavigationBarColor(COLOR_BACKGROUND);
+            window.setStatusBarColor(COLOR_DEVICE_HEADER);
+            window.setNavigationBarColor(COLOR_DEVICE_FOOTER);
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             window.getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);

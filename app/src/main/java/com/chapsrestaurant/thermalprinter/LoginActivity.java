@@ -4,10 +4,13 @@ import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Typeface;
+import android.os.Build;
 import android.os.Bundle;
 import android.text.InputType;
 import android.view.Gravity;
 import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -39,6 +42,8 @@ public class LoginActivity extends Activity {
 
     private static final String LOGIN_URL = API_BASE_URL + "login.php";
     private static final int CONNECTION_TIMEOUT_MS = 15000;
+    private static final int COLOR_DEVICE_HEADER = 0xFFFF7A00;
+    private static final int COLOR_DEVICE_FOOTER = 0xFF000000;
 
     private final ExecutorService loginExecutor = Executors.newSingleThreadExecutor();
 
@@ -51,6 +56,7 @@ public class LoginActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        configureSystemBars();
         if (isLoggedIn()) {
             openPrinterScreen();
             return;
@@ -62,6 +68,18 @@ public class LoginActivity extends Activity {
     protected void onDestroy() {
         super.onDestroy();
         loginExecutor.shutdownNow();
+    }
+
+    private void configureSystemBars() {
+        Window window = getWindow();
+        window.clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            window.setStatusBarColor(COLOR_DEVICE_HEADER);
+            window.setNavigationBarColor(COLOR_DEVICE_FOOTER);
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            window.getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
+        }
     }
 
     private void buildInterface() {
