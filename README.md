@@ -5,9 +5,9 @@ Aplicación Android nativa de POS para restaurante con login MySQL, menú princi
 ## Funciones
 
 - Pantalla de login en español antes de abrir el POS.
-- Menu principal del POS con accesos a dashboard, configuración, comandas, mesas, órdenes, cocina, usuarios y reportes.
+- Menu principal del POS en botón de hamburguesa superior, con accesos a dashboard, configuración, comandas, mesas, órdenes, cocina, usuarios y reportes.
 - Autenticación contra MySQL mediante una API PHP con mysqli, sin PDO ni prepared statements.
-- Guarda la sesión localmente y permite cerrar sesión desde la pantalla de impresión.
+- Guarda la sesión localmente y muestra arriba el usuario con un icono de logout para cerrar sesión.
 - Solicita permisos Bluetooth modernos (`BLUETOOTH_SCAN` y `BLUETOOTH_CONNECT`) en Android 12+.
 - Muestra impresoras/dispositivos Bluetooth emparejados.
 - Busca dispositivos Bluetooth cercanos.
@@ -20,13 +20,13 @@ Aplicación Android nativa de POS para restaurante con login MySQL, menú princi
 3. Espera a que Gradle sincronice el proyecto.
 4. La app apunta por defecto a `http://192.168.1.16/chapsrestaurant/server/api/login.php`. Si tu API queda en otra ruta, cambia `LOGIN_URL` en `app/src/main/java/com/chapsrestaurant/thermalprinter/LoginActivity.java`.
 5. Conecta un teléfono Android real con Bluetooth habilitado.
-6. Ejecuta la app, inicia sesión y selecciona una opción del menú principal. Para probar la impresora entra en **Configuracion de Impresora**, concede los permisos, presiona **Buscar impresoras Bluetooth**, selecciona la impresora y pulsa **Imprimir prueba térmica**.
+6. Ejecuta la app, inicia sesión, toca el botón **☰** de arriba para abrir el menú principal y selecciona una opción. Para probar la impresora entra en **Configuracion de Impresora**, concede los permisos, presiona **Buscar impresoras Bluetooth**, selecciona la impresora y pulsa **Imprimir prueba térmica**.
 
 > Nota: muchas impresoras térmicas Bluetooth requieren emparejarse primero desde los ajustes del teléfono usando un PIN como `0000` o `1234`.
 
 ## Menu principal del POS
 
-El menú inicial contiene estas opciones:
+El menú se abre con el botón de hamburguesa **☰** ubicado hasta arriba. En la parte superior derecha aparece el icono de logout y, a su lado derecho, el usuario conectado. El menú contiene estas opciones:
 
 - Dashboard
 - Configuracion de Negocio
