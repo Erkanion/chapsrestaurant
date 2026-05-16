@@ -17,7 +17,7 @@ Aplicación Android nativa para iniciar sesión contra una base de datos MySQL, 
 1. Abre Android Studio.
 2. Selecciona **Open** y elige esta carpeta del proyecto.
 3. Espera a que Gradle sincronice el proyecto.
-4. Cambia `LOGIN_URL` en `app/src/main/java/com/chapsrestaurant/thermalprinter/LoginActivity.java` por la URL real de tu API, por ejemplo `https://midominio.com/api/login.php`.
+4. La app apunta por defecto a `http://192.168.1.11/chapsrestaurant/api/login.php`. Si tu API queda en otra ruta, cambia `LOGIN_URL` en `app/src/main/java/com/chapsrestaurant/thermalprinter/LoginActivity.java`.
 5. Conecta un teléfono Android real con Bluetooth habilitado.
 6. Ejecuta la app, inicia sesión, concede los permisos, presiona **Buscar impresoras Bluetooth**, selecciona la impresora y pulsa **Imprimir prueba térmica**.
 
@@ -37,4 +37,4 @@ php -r "echo password_hash('123456', PASSWORD_DEFAULT) . PHP_EOL;"
 ```
 
 5. Inserta el hash generado en la columna `password_hash` de la tabla `users`.
-6. Verifica que `login.php` responda JSON y configura esa URL en `LOGIN_URL` dentro de la app.
+6. Verifica que `login.php` responda JSON en `http://192.168.1.11/chapsrestaurant/api/login.php` o ajusta `LOGIN_URL` si tu endpoint queda en otra ruta.
