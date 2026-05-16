@@ -56,6 +56,7 @@ public class MainActivity extends Activity {
     private Button printButton;
     private ProgressBar progressBar;
     private TextView statusText;
+    private boolean discoveryReceiverRegistered;
 
     private final BroadcastReceiver discoveryReceiver = new BroadcastReceiver() {
         @Override
@@ -75,6 +76,11 @@ public class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        if (!isLoggedIn()) {
+            openLoginScreen();
+            return;
+        }
+
         BluetoothManager bluetoothManager = getSystemService(BluetoothManager.class);
         bluetoothAdapter = bluetoothManager == null ? null : bluetoothManager.getAdapter();
         buildInterface();
@@ -97,7 +103,10 @@ public class MainActivity extends Activity {
         if (bluetoothAdapter != null && hasBluetoothPermission() && bluetoothAdapter.isDiscovering()) {
             bluetoothAdapter.cancelDiscovery();
         }
-        unregisterReceiver(discoveryReceiver);
+        if (discoveryReceiverRegistered) {
+            unregisterReceiver(discoveryReceiver);
+            discoveryReceiverRegistered = false;
+        }
         printerExecutor.shutdownNow();
     }
 
@@ -124,6 +133,24 @@ public class MainActivity extends Activity {
                 statusText.setText("Bluetooth debe estar activo para buscar impresoras.");
             }
         }
+    }
+
+    private boolean isLoggedIn() {
+        return getSharedPreferences(LoginActivity.AUTH_PREFS, MODE_PRIVATE)
+                .getBoolean(LoginActivity.KEY_IS_LOGGED_IN, false);
+    }
+
+    private void logout() {
+        getSharedPreferences(LoginActivity.AUTH_PREFS, MODE_PRIVATE)
+                .edit()
+                .clear()
+                .apply();
+        openLoginScreen();
+    }
+
+    private void openLoginScreen() {
+        startActivity(new Intent(this, LoginActivity.class));
+        finish();
     }
 
     private void buildInterface() {
@@ -163,6 +190,14 @@ public class MainActivity extends Activity {
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT));
 
+        Button logoutButton = new Button(this);
+        logoutButton.setText("Cerrar sesión");
+        logoutButton.setAllCaps(false);
+        logoutButton.setOnClickListener(view -> logout());
+        root.addView(logoutButton, new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT));
+
         progressBar = new ProgressBar(this);
         progressBar.setIndeterminate(true);
         progressBar.setVisibility(View.GONE);
@@ -199,6 +234,7 @@ public class MainActivity extends Activity {
         filter.addAction(BluetoothAdapter.ACTION_DISCOVERY_FINISHED);
         filter.addAction(BluetoothDevice.ACTION_FOUND);
         registerReceiver(discoveryReceiver, filter);
+        discoveryReceiverRegistered = true;
     }
 
     private void requestBluetoothPermissionsIfNeeded() {
