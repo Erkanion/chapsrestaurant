@@ -23,12 +23,11 @@ import java.util.Arrays;
 import java.util.List;
 
 public class MainActivity extends Activity {
-    private static final int COLOR_BLACK = 0xFF101010;
-    private static final int COLOR_ORANGE = 0xFFFF7A00;
-    private static final int COLOR_RED = 0xFFD62828;
-    private static final int COLOR_WOOD = 0xFF8B5A2B;
-    private static final int COLOR_DARK_GREEN = 0xFF0B3D2E;
-    private static final int COLOR_CREAM = 0xFFFFF3E0;
+    private static final int COLOR_BACKGROUND = 0xFFFAFAFA;
+    private static final int COLOR_SURFACE = 0xFFFFFFFF;
+    private static final int COLOR_TEXT = 0xFF212121;
+    private static final int COLOR_MUTED = 0xFF6B7280;
+    private static final int COLOR_ACCENT = 0xFF2F6F5E;
 
     private static final List<String> MENU_OPTIONS = Arrays.asList(
             "Dashboard",
@@ -86,10 +85,10 @@ public class MainActivity extends Activity {
         Window window = getWindow();
         window.clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            window.setStatusBarColor(COLOR_BLACK);
+            window.setStatusBarColor(COLOR_BACKGROUND);
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            window.getDecorView().setSystemUiVisibility(0);
+            window.getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
         }
     }
 
@@ -97,22 +96,22 @@ public class MainActivity extends Activity {
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
         root.setPadding(20, 18 + getStatusBarHeight(), 20, 20);
-        root.setBackgroundColor(COLOR_DARK_GREEN);
+        root.setBackgroundColor(COLOR_BACKGROUND);
 
         LinearLayout topBar = new LinearLayout(this);
         topBar.setOrientation(LinearLayout.HORIZONTAL);
         topBar.setGravity(Gravity.CENTER_VERTICAL);
-        topBar.setPadding(14, 10, 14, 10);
-        topBar.setBackgroundColor(COLOR_BLACK);
+        topBar.setPadding(0, 8, 0, 8);
+        topBar.setBackgroundColor(COLOR_SURFACE);
         root.addView(topBar, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT));
 
         Button hamburgerButton = new Button(this);
         hamburgerButton.setText("☰");
-        hamburgerButton.setTextSize(24);
-        hamburgerButton.setTextColor(COLOR_CREAM);
-        hamburgerButton.setBackgroundColor(COLOR_ORANGE);
+        hamburgerButton.setTextSize(22);
+        hamburgerButton.setTextColor(COLOR_ACCENT);
+        hamburgerButton.setBackgroundColor(COLOR_SURFACE);
         hamburgerButton.setAllCaps(false);
         hamburgerButton.setOnClickListener(view -> toggleMenu());
         topBar.addView(hamburgerButton, new LinearLayout.LayoutParams(
@@ -127,7 +126,7 @@ public class MainActivity extends Activity {
 
         TextView userText = new TextView(this);
         userText.setText(getCurrentUserName());
-        userText.setTextColor(COLOR_CREAM);
+        userText.setTextColor(COLOR_MUTED);
         userText.setTextSize(15);
         userText.setTypeface(Typeface.DEFAULT_BOLD);
         userText.setPadding(0, 0, 12, 0);
@@ -137,9 +136,9 @@ public class MainActivity extends Activity {
 
         Button logoutButton = new Button(this);
         logoutButton.setText("⎋");
-        logoutButton.setTextSize(20);
-        logoutButton.setTextColor(COLOR_CREAM);
-        logoutButton.setBackgroundColor(COLOR_RED);
+        logoutButton.setTextSize(18);
+        logoutButton.setTextColor(COLOR_MUTED);
+        logoutButton.setBackgroundColor(COLOR_SURFACE);
         logoutButton.setAllCaps(false);
         logoutButton.setOnClickListener(view -> logout());
         topBar.addView(logoutButton, new LinearLayout.LayoutParams(
@@ -148,8 +147,8 @@ public class MainActivity extends Activity {
 
         welcomeText = new TextView(this);
         welcomeText.setText("Bienvenido");
-        welcomeText.setTextColor(COLOR_CREAM);
-        welcomeText.setTextSize(26);
+        welcomeText.setTextColor(COLOR_TEXT);
+        welcomeText.setTextSize(24);
         welcomeText.setTypeface(Typeface.DEFAULT_BOLD);
         welcomeText.setGravity(Gravity.CENTER_HORIZONTAL);
         welcomeText.setPadding(0, 24, 0, 18);
@@ -160,8 +159,8 @@ public class MainActivity extends Activity {
         menuContainer = new LinearLayout(this);
         menuContainer.setOrientation(LinearLayout.VERTICAL);
         menuContainer.setVisibility(View.GONE);
-        menuContainer.setBackgroundColor(COLOR_WOOD);
-        menuContainer.setPadding(12, 12, 12, 12);
+        menuContainer.setBackgroundColor(COLOR_SURFACE);
+        menuContainer.setPadding(0, 12, 0, 0);
         root.addView(menuContainer, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 0,
@@ -169,8 +168,8 @@ public class MainActivity extends Activity {
 
         TextView menuTitle = new TextView(this);
         menuTitle.setText("POS Restaurante");
-        menuTitle.setTextColor(COLOR_CREAM);
-        menuTitle.setTextSize(24);
+        menuTitle.setTextColor(COLOR_TEXT);
+        menuTitle.setTextSize(22);
         menuTitle.setTypeface(Typeface.DEFAULT_BOLD);
         menuTitle.setGravity(Gravity.CENTER_HORIZONTAL);
         menuTitle.setPadding(0, 8, 0, 14);
@@ -185,18 +184,18 @@ public class MainActivity extends Activity {
             @Override
             public View getView(int position, View convertView, ViewGroup parent) {
                 TextView itemView = (TextView) super.getView(position, convertView, parent);
-                itemView.setTextColor(COLOR_CREAM);
-                itemView.setTextSize(18);
-                itemView.setTypeface(Typeface.DEFAULT_BOLD);
-                itemView.setBackgroundColor(position % 2 == 0 ? COLOR_BLACK : COLOR_DARK_GREEN);
-                itemView.setPadding(20, 18, 20, 18);
+                itemView.setTextColor(COLOR_TEXT);
+                itemView.setTextSize(16);
+                itemView.setTypeface(Typeface.DEFAULT);
+                itemView.setBackgroundColor(COLOR_SURFACE);
+                itemView.setPadding(18, 16, 18, 16);
                 return itemView;
             }
         };
         ListView menuList = new ListView(this);
         menuList.setAdapter(menuAdapter);
-        menuList.setDividerHeight(4);
-        menuList.setBackgroundColor(COLOR_WOOD);
+        menuList.setDividerHeight(1);
+        menuList.setBackgroundColor(COLOR_SURFACE);
         menuList.setOnItemClickListener(this::handleMenuSelection);
         menuContainer.addView(menuList, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
