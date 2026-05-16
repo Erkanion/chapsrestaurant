@@ -3,7 +3,10 @@ package com.chapsrestaurant.thermalprinter;
 import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Typeface;
+import android.os.Build;
 import android.os.Bundle;
+import android.view.Window;
+import android.view.WindowManager;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.AdapterView;
@@ -49,6 +52,7 @@ public class MainActivity extends Activity {
             openLoginScreen();
             return;
         }
+        configureSystemBars();
         buildInterface();
     }
 
@@ -70,10 +74,21 @@ public class MainActivity extends Activity {
         finish();
     }
 
+    private void configureSystemBars() {
+        Window window = getWindow();
+        window.clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            window.setStatusBarColor(0xFFF7F2EF);
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            window.getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
+        }
+    }
+
     private void buildInterface() {
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(24, 28, 24, 24);
+        root.setPadding(24, 28 + getStatusBarHeight(), 24, 24);
         root.setBackgroundColor(0xFFF7F2EF);
 
         LinearLayout topBar = new LinearLayout(this);
@@ -155,6 +170,14 @@ public class MainActivity extends Activity {
                 1));
 
         setContentView(root);
+    }
+
+    private int getStatusBarHeight() {
+        int resourceId = getResources().getIdentifier("status_bar_height", "dimen", "android");
+        if (resourceId > 0) {
+            return getResources().getDimensionPixelSize(resourceId);
+        }
+        return 0;
     }
 
     private String getCurrentUserName() {
