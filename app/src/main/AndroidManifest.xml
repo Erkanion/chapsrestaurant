@@ -26,6 +26,10 @@
             android:exported="false" />
 
         <activity
+            android:name=".BusinessConfigActivity"
+            android:exported="false" />
+
+        <activity
             android:name=".LoginActivity"
             android:exported="true">
             <intent-filter>

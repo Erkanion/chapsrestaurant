@@ -6,6 +6,7 @@ Aplicación Android nativa de POS para restaurante con login MySQL, menú princi
 
 - Pantalla de login en español antes de abrir el POS.
 - Cabecera superior minimalista con botón hamburguesa, usuario a la izquierda del icono de logout y texto de bienvenida debajo.
+- Apartado **Configuracion de Negocio** para capturar uno o varios negocios por usuario.
 - Autenticación contra MySQL mediante una API PHP con mysqli, sin PDO ni prepared statements.
 - Guarda la sesión localmente y muestra el usuario antes del icono de logout para cerrar sesión.
 - Solicita permisos Bluetooth modernos (`BLUETOOTH_SCAN` y `BLUETOOTH_CONNECT`) en Android 12+.
@@ -44,6 +45,22 @@ El menú se abre con el botón de hamburguesa **☰** ubicado hasta arriba. El t
 - Gestion de Meseros
 - Gestion de Usuarios
 - Gestios de Mesas
+
+## Configuracion de Negocio
+
+Desde el menu principal entra a **Configuracion de Negocio** para administrar uno o varios negocios del usuario actual. Cada negocio permite capturar:
+
+- Nombre de la Tienda / Negocio
+- Razon Social
+- RFC
+- Regimen Fiscal
+- Telefono
+- Direccion Completa
+- Correo Electronico
+- Slogan
+- Logo
+
+La pantalla incluye navegacion entre negocios, boton para agregar otro negocio y guardado local por usuario. La base de datos tambien incluye la tabla `businesses` para soportar la relacion de un usuario con multiples negocios.
 
 ## Configurar MySQL y API de login
 

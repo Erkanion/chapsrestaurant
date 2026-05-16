@@ -231,6 +231,10 @@ public class MainActivity extends Activity {
         String option = MENU_OPTIONS.get(position);
         menuVisible = false;
         menuContainer.setVisibility(View.GONE);
+        if ("Configuracion de Negocio".equals(option)) {
+            startActivity(new Intent(this, BusinessConfigActivity.class));
+            return;
+        }
         if ("Configuracion de Impresora".equals(option)) {
             startActivity(new Intent(this, PrinterConfigActivity.class));
             return;
