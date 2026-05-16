@@ -1,10 +1,11 @@
 # Chaps Thermal Printer
 
-Aplicación Android nativa para iniciar sesión contra una base de datos MySQL, buscar impresoras térmicas Bluetooth y enviar una impresión de prueba usando comandos ESC/POS.
+Aplicación Android nativa de POS para restaurante con login MySQL, menú principal de módulos y configuración de impresora térmica Bluetooth con prueba ESC/POS.
 
 ## Funciones
 
-- Pantalla de login en español antes de abrir la impresora.
+- Pantalla de login en español antes de abrir el POS.
+- Menu principal del POS con accesos a dashboard, configuración, comandas, mesas, órdenes, cocina, usuarios y reportes.
 - Autenticación contra MySQL mediante una API PHP con mysqli, sin PDO ni prepared statements.
 - Guarda la sesión localmente y permite cerrar sesión desde la pantalla de impresión.
 - Solicita permisos Bluetooth modernos (`BLUETOOTH_SCAN` y `BLUETOOTH_CONNECT`) en Android 12+.
@@ -19,9 +20,30 @@ Aplicación Android nativa para iniciar sesión contra una base de datos MySQL, 
 3. Espera a que Gradle sincronice el proyecto.
 4. La app apunta por defecto a `http://192.168.1.16/chapsrestaurant/server/api/login.php`. Si tu API queda en otra ruta, cambia `LOGIN_URL` en `app/src/main/java/com/chapsrestaurant/thermalprinter/LoginActivity.java`.
 5. Conecta un teléfono Android real con Bluetooth habilitado.
-6. Ejecuta la app, inicia sesión, concede los permisos, presiona **Buscar impresoras Bluetooth**, selecciona la impresora y pulsa **Imprimir prueba térmica**.
+6. Ejecuta la app, inicia sesión y selecciona una opción del menú principal. Para probar la impresora entra en **Configuracion de Impresora**, concede los permisos, presiona **Buscar impresoras Bluetooth**, selecciona la impresora y pulsa **Imprimir prueba térmica**.
 
 > Nota: muchas impresoras térmicas Bluetooth requieren emparejarse primero desde los ajustes del teléfono usando un PIN como `0000` o `1234`.
+
+## Menu principal del POS
+
+El menú inicial contiene estas opciones:
+
+- Dashboard
+- Configuracion de Negocio
+- Configuracion de Impresora
+- Menu
+- Informes y Estadisticas
+- Corte de Caja
+- Categorias
+- Productos
+- Ingredientes
+- Nueva Comanda
+- Mesa y Ordenes
+- Ordenes
+- Cocina
+- Gestion de Meseros
+- Gestion de Usuarios
+- Gestios de Mesas
 
 ## Configurar MySQL y API de login
 
