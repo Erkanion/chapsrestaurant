@@ -4,12 +4,16 @@ import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Typeface;
+import android.os.Build;
 import android.os.Bundle;
 import android.text.InputType;
 import android.view.Gravity;
 import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -33,9 +37,13 @@ public class LoginActivity extends Activity {
     static final String AUTH_PREFS = "auth_preferences";
     static final String KEY_IS_LOGGED_IN = "is_logged_in";
     static final String KEY_USER_NAME = "user_name";
+    static final String KEY_USER_ID = "user_id";
+    static final String API_BASE_URL = "http://192.168.1.16/chapsrestaurant/server/api/";
 
-    private static final String LOGIN_URL = "http://192.168.1.16/chapsrestaurant/server/api/login.php";
+    private static final String LOGIN_URL = API_BASE_URL + "login.php";
     private static final int CONNECTION_TIMEOUT_MS = 15000;
+    private static final int COLOR_DEVICE_HEADER = 0xFFFF7A00;
+    private static final int COLOR_DEVICE_FOOTER = 0xFF000000;
 
     private final ExecutorService loginExecutor = Executors.newSingleThreadExecutor();
 
@@ -48,6 +56,7 @@ public class LoginActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        configureSystemBars();
         if (isLoggedIn()) {
             openPrinterScreen();
             return;
@@ -61,12 +70,34 @@ public class LoginActivity extends Activity {
         loginExecutor.shutdownNow();
     }
 
+    private void configureSystemBars() {
+        Window window = getWindow();
+        window.clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN | WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+            window.setStatusBarColor(COLOR_DEVICE_HEADER);
+            window.setNavigationBarColor(COLOR_DEVICE_FOOTER);
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            window.getDecorView().setSystemUiVisibility(0);
+        }
+    }
+
     private void buildInterface() {
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
         root.setGravity(Gravity.CENTER_VERTICAL);
-        root.setPadding(40, 40, 40, 40);
+        root.setPadding(40, 40, 40, 40 + getNavigationBarHeight());
         root.setBackgroundColor(0xFFF7F2EF);
+
+        ImageView logoImage = new ImageView(this);
+        logoImage.setImageResource(R.drawable.chapsrestaurant);
+        logoImage.setContentDescription("Chaps Restaurant");
+        logoImage.setAdjustViewBounds(true);
+        LinearLayout.LayoutParams logoParams = new LinearLayout.LayoutParams(180, 180);
+        logoParams.gravity = Gravity.CENTER_HORIZONTAL;
+        logoParams.setMargins(0, 0, 0, 12);
+        root.addView(logoImage, logoParams);
 
         TextView title = new TextView(this);
         title.setText("Chaps Restaurant");
@@ -120,6 +151,14 @@ public class LoginActivity extends Activity {
         root.addView(statusText, fullWidthParams());
 
         setContentView(root);
+    }
+
+    private int getNavigationBarHeight() {
+        int resourceId = getResources().getIdentifier("navigation_bar_height", "dimen", "android");
+        if (resourceId > 0) {
+            return getResources().getDimensionPixelSize(resourceId);
+        }
+        return 0;
     }
 
     private LinearLayout.LayoutParams fullWidthParams() {
@@ -183,8 +222,9 @@ public class LoginActivity extends Activity {
         JSONObject jsonResponse = new JSONObject(responseText);
         boolean success = jsonResponse.optBoolean("success", false);
         String message = jsonResponse.optString("message", success ? "Acceso concedido" : "Acceso denegado");
+        int userId = jsonResponse.optInt("user_id", 0);
         String displayName = jsonResponse.optString("name", user);
-        return new LoginResponse(success, message, displayName);
+        return new LoginResponse(success, message, displayName, userId);
     }
 
     private String readStream(InputStream stream) throws IOException {
@@ -208,6 +248,7 @@ public class LoginActivity extends Activity {
                     .edit()
                     .putBoolean(KEY_IS_LOGGED_IN, true)
                     .putString(KEY_USER_NAME, response.displayName)
+                    .putInt(KEY_USER_ID, response.userId)
                     .apply();
             toast("Bienvenido " + response.displayName);
             openPrinterScreen();
@@ -243,11 +284,13 @@ public class LoginActivity extends Activity {
         final boolean success;
         final String message;
         final String displayName;
+        final int userId;
 
-        LoginResponse(boolean success, String message, String displayName) {
+        LoginResponse(boolean success, String message, String displayName, int userId) {
             this.success = success;
             this.message = message;
             this.displayName = displayName;
+            this.userId = userId;
         }
     }
 }

@@ -13,6 +13,7 @@ import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -28,6 +29,8 @@ public class MainActivity extends Activity {
     private static final int COLOR_TEXT = 0xFF212121;
     private static final int COLOR_MUTED = 0xFF6B7280;
     private static final int COLOR_ACCENT = 0xFF2F6F5E;
+    private static final int COLOR_DEVICE_HEADER = 0xFFFF7A00;
+    private static final int COLOR_DEVICE_FOOTER = 0xFF000000;
 
     private static final List<String> MENU_OPTIONS = Arrays.asList(
             "Dashboard",
@@ -49,6 +52,7 @@ public class MainActivity extends Activity {
     );
 
     private LinearLayout menuContainer;
+    private LinearLayout homeContainer;
     private TextView welcomeText;
     private boolean menuVisible;
 
@@ -83,19 +87,21 @@ public class MainActivity extends Activity {
 
     private void configureSystemBars() {
         Window window = getWindow();
-        window.clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        window.clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN | WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            window.setStatusBarColor(COLOR_BACKGROUND);
+            window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+            window.setStatusBarColor(COLOR_DEVICE_HEADER);
+            window.setNavigationBarColor(COLOR_DEVICE_FOOTER);
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            window.getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
+            window.getDecorView().setSystemUiVisibility(0);
         }
     }
 
     private void buildInterface() {
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(20, 18 + getStatusBarHeight(), 20, 20);
+        root.setPadding(dpToPx(20), dpToPx(18) + getStatusBarHeight(), dpToPx(20), dpToPx(20) + getNavigationBarHeight());
         root.setBackgroundColor(COLOR_BACKGROUND);
 
         LinearLayout topBar = new LinearLayout(this);
@@ -145,16 +151,36 @@ public class MainActivity extends Activity {
                 LinearLayout.LayoutParams.WRAP_CONTENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT));
 
+        homeContainer = new LinearLayout(this);
+        homeContainer.setOrientation(LinearLayout.VERTICAL);
+        homeContainer.setGravity(Gravity.CENTER);
+        homeContainer.setBackgroundColor(COLOR_BACKGROUND);
+        root.addView(homeContainer, new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                0,
+                1));
+
         welcomeText = new TextView(this);
         welcomeText.setText("Bienvenido");
         welcomeText.setTextColor(COLOR_TEXT);
         welcomeText.setTextSize(24);
         welcomeText.setTypeface(Typeface.DEFAULT_BOLD);
-        welcomeText.setGravity(Gravity.CENTER_HORIZONTAL);
-        welcomeText.setPadding(0, 24, 0, 18);
-        root.addView(welcomeText, new LinearLayout.LayoutParams(
+        welcomeText.setGravity(Gravity.CENTER);
+        welcomeText.setPadding(0, 0, 0, dpToPx(18));
+        homeContainer.addView(welcomeText, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT));
+
+        ImageView logoImage = new ImageView(this);
+        logoImage.setImageResource(R.drawable.chapsrestaurant);
+        logoImage.setContentDescription("Chaps Restaurant");
+        logoImage.setAdjustViewBounds(true);
+        logoImage.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        LinearLayout.LayoutParams logoParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                dpToPx(320));
+        logoParams.gravity = Gravity.CENTER;
+        homeContainer.addView(logoImage, logoParams);
 
         menuContainer = new LinearLayout(this);
         menuContainer.setOrientation(LinearLayout.VERTICAL);
@@ -205,6 +231,18 @@ public class MainActivity extends Activity {
         setContentView(root);
     }
 
+    private int dpToPx(int dp) {
+        return Math.round(dp * getResources().getDisplayMetrics().density);
+    }
+
+    private int getNavigationBarHeight() {
+        int resourceId = getResources().getIdentifier("navigation_bar_height", "dimen", "android");
+        if (resourceId > 0) {
+            return getResources().getDimensionPixelSize(resourceId);
+        }
+        return 0;
+    }
+
     private int getStatusBarHeight() {
         int resourceId = getResources().getIdentifier("status_bar_height", "dimen", "android");
         if (resourceId > 0) {
@@ -225,12 +263,14 @@ public class MainActivity extends Activity {
     private void toggleMenu() {
         menuVisible = !menuVisible;
         menuContainer.setVisibility(menuVisible ? View.VISIBLE : View.GONE);
+        homeContainer.setVisibility(menuVisible ? View.GONE : View.VISIBLE);
     }
 
     private void handleMenuSelection(AdapterView<?> parent, View view, int position, long id) {
         String option = MENU_OPTIONS.get(position);
         menuVisible = false;
         menuContainer.setVisibility(View.GONE);
+        homeContainer.setVisibility(View.VISIBLE);
         if ("Configuracion de Negocio".equals(option)) {
             startActivity(new Intent(this, BusinessConfigActivity.class));
             return;
